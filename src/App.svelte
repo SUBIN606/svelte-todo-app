@@ -1,30 +1,40 @@
 <script>
-	export let name;
+	import Input from "./components/Input.svelte";
 </script>
 
 <main>
-	<h1>Hello {name}!</h1>
-	<p>Visit the <a href="https://svelte.dev/tutorial">Svelte tutorial</a> to learn how to build Svelte apps.</p>
+	<div>
+		<p>To Do List</p>
+		<Input/>
+	</div>
+
 </main>
+
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
 
 <style>
 	main {
-		text-align: center;
-		padding: 1em;
-		max-width: 240px;
-		margin: 0 auto;
+		width: 100vw;
+		height: 100vh;
+		background-color:#f8f9fa;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+	p {
+		font-size: 3rem;
+		font-family: 'Fredoka One', cursive;
+		
+	}
+	div {
+		width: 40vw;
+		background-color:#f8f9fa;
+		padding: 3rem;
+		border-radius: 1rem;
+		box-shadow: 
+    7px 7px 19px 0 rgb(255 255 255 / 88%) inset, -7px -7px 19px 0 rgb(228 228 228) inset;
 	}
 
-	h1 {
-		color: #ff3e00;
-		text-transform: uppercase;
-		font-size: 4em;
-		font-weight: 100;
-	}
-
-	@media (min-width: 640px) {
-		main {
-			max-width: none;
-		}
-	}
+	
 </style>
