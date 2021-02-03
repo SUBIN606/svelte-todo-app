@@ -68,6 +68,9 @@ var app = (function () {
     function set_input_value(input, value) {
         input.value = value == null ? '' : value;
     }
+    function toggle_class(element, name, toggle) {
+        element.classList[toggle ? 'add' : 'remove'](name);
+    }
     function custom_event(type, detail) {
         const e = document.createEvent('CustomEvent');
         e.initCustomEvent(type, false, false, detail);
@@ -572,11 +575,9 @@ var app = (function () {
     	let input_checked_value;
     	let t0;
     	let p;
-    	let t1_value = /*todo*/ ctx[0].id + "";
+    	let t1_value = /*todo*/ ctx[0].text + "";
     	let t1;
-    	let t2_value = /*todo*/ ctx[0].text + "";
     	let t2;
-    	let t3;
     	let button;
     	let mounted;
     	let dispose;
@@ -588,16 +589,18 @@ var app = (function () {
     			t0 = space();
     			p = element("p");
     			t1 = text(t1_value);
-    			t2 = text(t2_value);
-    			t3 = space();
+    			t2 = space();
     			button = element("button");
-    			button.textContent = "x";
     			attr_dev(input, "type", "checkbox");
     			input.checked = input_checked_value = /*todo*/ ctx[0].completed;
+    			attr_dev(input, "class", "svelte-1b62zt2");
     			add_location(input, file$1, 7, 2, 101);
+    			attr_dev(p, "class", "svelte-1b62zt2");
+    			toggle_class(p, "done", /*todo*/ ctx[0].completed);
     			add_location(p, file$1, 8, 2, 193);
-    			add_location(button, file$1, 9, 2, 223);
-    			attr_dev(div, "class", "svelte-1vzwf70");
+    			attr_dev(button, "class", "svelte-1b62zt2");
+    			add_location(button, file$1, 9, 2, 242);
+    			attr_dev(div, "class", "svelte-1b62zt2");
     			add_location(div, file$1, 6, 0, 93);
     		},
     		l: function claim(nodes) {
@@ -609,8 +612,7 @@ var app = (function () {
     			append_dev(div, t0);
     			append_dev(div, p);
     			append_dev(p, t1);
-    			append_dev(p, t2);
-    			append_dev(div, t3);
+    			append_dev(div, t2);
     			append_dev(div, button);
 
     			if (!mounted) {
@@ -627,8 +629,11 @@ var app = (function () {
     				prop_dev(input, "checked", input_checked_value);
     			}
 
-    			if (dirty & /*todo*/ 1 && t1_value !== (t1_value = /*todo*/ ctx[0].id + "")) set_data_dev(t1, t1_value);
-    			if (dirty & /*todo*/ 1 && t2_value !== (t2_value = /*todo*/ ctx[0].text + "")) set_data_dev(t2, t2_value);
+    			if (dirty & /*todo*/ 1 && t1_value !== (t1_value = /*todo*/ ctx[0].text + "")) set_data_dev(t1, t1_value);
+
+    			if (dirty & /*todo*/ 1) {
+    				toggle_class(p, "done", /*todo*/ ctx[0].completed);
+    			}
     		},
     		i: noop,
     		o: noop,
@@ -830,6 +835,7 @@ var app = (function () {
     				each_blocks[i].c();
     			}
 
+    			attr_dev(div, "class", "svelte-1e6oqrs");
     			add_location(div, file$2, 7, 0, 141);
     		},
     		l: function claim(nodes) {
