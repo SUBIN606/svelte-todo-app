@@ -37,6 +37,12 @@ var app = (function () {
     function detach(node) {
         node.parentNode.removeChild(node);
     }
+    function destroy_each(iterations, detaching) {
+        for (let i = 0; i < iterations.length; i += 1) {
+            if (iterations[i])
+                iterations[i].d(detaching);
+        }
+    }
     function element(name) {
         return document.createElement(name);
     }
@@ -45,9 +51,6 @@ var app = (function () {
     }
     function space() {
         return text(' ');
-    }
-    function empty() {
-        return text('');
     }
     function listen(node, event, handler, options) {
         node.addEventListener(event, handler, options);
@@ -176,96 +179,12 @@ var app = (function () {
             block.o(local);
         }
     }
-    function outro_and_destroy_block(block, lookup) {
-        transition_out(block, 1, 1, () => {
-            lookup.delete(block.key);
-        });
-    }
-    function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, next, get_context) {
-        let o = old_blocks.length;
-        let n = list.length;
-        let i = o;
-        const old_indexes = {};
-        while (i--)
-            old_indexes[old_blocks[i].key] = i;
-        const new_blocks = [];
-        const new_lookup = new Map();
-        const deltas = new Map();
-        i = n;
-        while (i--) {
-            const child_ctx = get_context(ctx, list, i);
-            const key = get_key(child_ctx);
-            let block = lookup.get(key);
-            if (!block) {
-                block = create_each_block(key, child_ctx);
-                block.c();
-            }
-            else if (dynamic) {
-                block.p(child_ctx, dirty);
-            }
-            new_lookup.set(key, new_blocks[i] = block);
-            if (key in old_indexes)
-                deltas.set(key, Math.abs(i - old_indexes[key]));
-        }
-        const will_move = new Set();
-        const did_move = new Set();
-        function insert(block) {
-            transition_in(block, 1);
-            block.m(node, next);
-            lookup.set(block.key, block);
-            next = block.first;
-            n--;
-        }
-        while (o && n) {
-            const new_block = new_blocks[n - 1];
-            const old_block = old_blocks[o - 1];
-            const new_key = new_block.key;
-            const old_key = old_block.key;
-            if (new_block === old_block) {
-                // do nothing
-                next = new_block.first;
-                o--;
-                n--;
-            }
-            else if (!new_lookup.has(old_key)) {
-                // remove old block
-                destroy(old_block, lookup);
-                o--;
-            }
-            else if (!lookup.has(new_key) || will_move.has(new_key)) {
-                insert(new_block);
-            }
-            else if (did_move.has(old_key)) {
-                o--;
-            }
-            else if (deltas.get(new_key) > deltas.get(old_key)) {
-                did_move.add(new_key);
-                insert(new_block);
-            }
-            else {
-                will_move.add(old_key);
-                o--;
-            }
-        }
-        while (o--) {
-            const old_block = old_blocks[o];
-            if (!new_lookup.has(old_block.key))
-                destroy(old_block, lookup);
-        }
-        while (n)
-            insert(new_blocks[n - 1]);
-        return new_blocks;
-    }
-    function validate_each_keys(ctx, list, get_context, get_key) {
-        const keys = new Set();
-        for (let i = 0; i < list.length; i++) {
-            const key = get_key(get_context(ctx, list, i));
-            if (keys.has(key)) {
-                throw new Error('Cannot have duplicate keys in a keyed each');
-            }
-            keys.add(key);
-        }
-    }
+
+    const globals = (typeof window !== 'undefined'
+        ? window
+        : typeof globalThis !== 'undefined'
+            ? globalThis
+            : global);
     function create_component(block) {
         block && block.c();
     }
@@ -491,13 +410,14 @@ var app = (function () {
     			t0 = space();
     			button = element("button");
     			button.textContent = "ADD";
+    			attr_dev(input, "type", "text");
     			attr_dev(input, "placeholder", "할일을 입력하쇼");
     			attr_dev(input, "class", "svelte-1qe6e00");
-    			add_location(input, file, 5, 2, 52);
+    			add_location(input, file, 7, 2, 95);
     			attr_dev(button, "class", "svelte-1qe6e00");
-    			add_location(button, file, 6, 2, 104);
+    			add_location(button, file, 8, 2, 190);
     			attr_dev(div, "class", "svelte-1qe6e00");
-    			add_location(div, file, 4, 0, 44);
+    			add_location(div, file, 6, 0, 87);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -510,11 +430,27 @@ var app = (function () {
     			append_dev(div, button);
 
     			if (!mounted) {
-    				dispose = listen_dev(input, "input", /*input_input_handler*/ ctx[1]);
+    				dispose = [
+    					listen_dev(input, "input", /*input_input_handler*/ ctx[3]),
+    					listen_dev(input, "keyup", /*keyup_handler*/ ctx[4], false, false, false),
+    					listen_dev(
+    						button,
+    						"click",
+    						function () {
+    							if (is_function(/*addTodo*/ ctx[1])) /*addTodo*/ ctx[1].apply(this, arguments);
+    						},
+    						false,
+    						false,
+    						false
+    					)
+    				];
+
     				mounted = true;
     			}
     		},
-    		p: function update(ctx, [dirty]) {
+    		p: function update(new_ctx, [dirty]) {
+    			ctx = new_ctx;
+
     			if (dirty & /*todo*/ 1 && input.value !== /*todo*/ ctx[0]) {
     				set_input_value(input, /*todo*/ ctx[0]);
     			}
@@ -524,7 +460,7 @@ var app = (function () {
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(div);
     			mounted = false;
-    			dispose();
+    			run_all(dispose);
     		}
     	};
 
@@ -542,8 +478,10 @@ var app = (function () {
     function instance($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("Input", slots, []);
-    	let { todo = "" } = $$props;
-    	const writable_props = ["todo"];
+    	let { todo } = $$props;
+    	let { addTodo } = $$props;
+    	let { handleKeyUp } = $$props;
+    	const writable_props = ["todo", "addTodo", "handleKeyUp"];
 
     	Object.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Input> was created with unknown prop '${key}'`);
@@ -554,27 +492,33 @@ var app = (function () {
     		$$invalidate(0, todo);
     	}
 
+    	const keyup_handler = e => handleKeyUp(e);
+
     	$$self.$$set = $$props => {
     		if ("todo" in $$props) $$invalidate(0, todo = $$props.todo);
+    		if ("addTodo" in $$props) $$invalidate(1, addTodo = $$props.addTodo);
+    		if ("handleKeyUp" in $$props) $$invalidate(2, handleKeyUp = $$props.handleKeyUp);
     	};
 
-    	$$self.$capture_state = () => ({ todo });
+    	$$self.$capture_state = () => ({ todo, addTodo, handleKeyUp });
 
     	$$self.$inject_state = $$props => {
     		if ("todo" in $$props) $$invalidate(0, todo = $$props.todo);
+    		if ("addTodo" in $$props) $$invalidate(1, addTodo = $$props.addTodo);
+    		if ("handleKeyUp" in $$props) $$invalidate(2, handleKeyUp = $$props.handleKeyUp);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [todo, input_input_handler];
+    	return [todo, addTodo, handleKeyUp, input_input_handler, keyup_handler];
     }
 
     class Input extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance, create_fragment, safe_not_equal, { todo: 0 });
+    		init(this, options, instance, create_fragment, safe_not_equal, { todo: 0, addTodo: 1, handleKeyUp: 2 });
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
@@ -582,6 +526,21 @@ var app = (function () {
     			options,
     			id: create_fragment.name
     		});
+
+    		const { ctx } = this.$$;
+    		const props = options.props || {};
+
+    		if (/*todo*/ ctx[0] === undefined && !("todo" in props)) {
+    			console.warn("<Input> was created without expected prop 'todo'");
+    		}
+
+    		if (/*addTodo*/ ctx[1] === undefined && !("addTodo" in props)) {
+    			console.warn("<Input> was created without expected prop 'addTodo'");
+    		}
+
+    		if (/*handleKeyUp*/ ctx[2] === undefined && !("handleKeyUp" in props)) {
+    			console.warn("<Input> was created without expected prop 'handleKeyUp'");
+    		}
     	}
 
     	get todo() {
@@ -589,6 +548,22 @@ var app = (function () {
     	}
 
     	set todo(value) {
+    		throw new Error("<Input>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get addTodo() {
+    		throw new Error("<Input>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set addTodo(value) {
+    		throw new Error("<Input>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get handleKeyUp() {
+    		throw new Error("<Input>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set handleKeyUp(value) {
     		throw new Error("<Input>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
     }
@@ -603,9 +578,11 @@ var app = (function () {
     	let input_checked_value;
     	let t0;
     	let p;
-    	let t1_value = /*todo*/ ctx[0].text + "";
+    	let t1_value = /*todo*/ ctx[0].id + "";
     	let t1;
+    	let t2_value = /*todo*/ ctx[0].text + "";
     	let t2;
+    	let t3;
     	let button;
 
     	const block = {
@@ -615,14 +592,15 @@ var app = (function () {
     			t0 = space();
     			p = element("p");
     			t1 = text(t1_value);
-    			t2 = space();
+    			t2 = text(t2_value);
+    			t3 = space();
     			button = element("button");
     			button.textContent = "x";
     			attr_dev(input, "type", "checkbox");
     			input.checked = input_checked_value = /*todo*/ ctx[0].completed;
     			add_location(input, file$1, 5, 2, 47);
     			add_location(p, file$1, 6, 2, 99);
-    			add_location(button, file$1, 7, 2, 120);
+    			add_location(button, file$1, 7, 2, 129);
     			attr_dev(div, "class", "svelte-1vzwf70");
     			add_location(div, file$1, 4, 0, 39);
     		},
@@ -635,7 +613,8 @@ var app = (function () {
     			append_dev(div, t0);
     			append_dev(div, p);
     			append_dev(p, t1);
-    			append_dev(div, t2);
+    			append_dev(p, t2);
+    			append_dev(div, t3);
     			append_dev(div, button);
     		},
     		p: function update(ctx, [dirty]) {
@@ -643,7 +622,8 @@ var app = (function () {
     				prop_dev(input, "checked", input_checked_value);
     			}
 
-    			if (dirty & /*todo*/ 1 && t1_value !== (t1_value = /*todo*/ ctx[0].text + "")) set_data_dev(t1, t1_value);
+    			if (dirty & /*todo*/ 1 && t1_value !== (t1_value = /*todo*/ ctx[0].id + "")) set_data_dev(t1, t1_value);
+    			if (dirty & /*todo*/ 1 && t2_value !== (t2_value = /*todo*/ ctx[0].text + "")) set_data_dev(t2, t2_value);
     		},
     		i: noop,
     		o: noop,
@@ -728,9 +708,8 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (7:2) {#each todoList as todo (todo.id)}
-    function create_each_block(key_1, ctx) {
-    	let first;
+    // (7:2) {#each todoList as todo }
+    function create_each_block(ctx) {
     	let todoitem;
     	let current;
 
@@ -740,20 +719,14 @@ var app = (function () {
     		});
 
     	const block = {
-    		key: key_1,
-    		first: null,
     		c: function create() {
-    			first = empty();
     			create_component(todoitem.$$.fragment);
-    			this.first = first;
     		},
     		m: function mount(target, anchor) {
-    			insert_dev(target, first, anchor);
     			mount_component(todoitem, target, anchor);
     			current = true;
     		},
-    		p: function update(new_ctx, dirty) {
-    			ctx = new_ctx;
+    		p: function update(ctx, dirty) {
     			const todoitem_changes = {};
     			if (dirty & /*todoList*/ 1) todoitem_changes.todo = /*todo*/ ctx[1];
     			todoitem.$set(todoitem_changes);
@@ -768,7 +741,6 @@ var app = (function () {
     			current = false;
     		},
     		d: function destroy(detaching) {
-    			if (detaching) detach_dev(first);
     			destroy_component(todoitem, detaching);
     		}
     	};
@@ -777,7 +749,7 @@ var app = (function () {
     		block,
     		id: create_each_block.name,
     		type: "each",
-    		source: "(7:2) {#each todoList as todo (todo.id)}",
+    		source: "(7:2) {#each todoList as todo }",
     		ctx
     	});
 
@@ -786,19 +758,18 @@ var app = (function () {
 
     function create_fragment$2(ctx) {
     	let div;
-    	let each_blocks = [];
-    	let each_1_lookup = new Map();
     	let current;
     	let each_value = /*todoList*/ ctx[0];
     	validate_each_argument(each_value);
-    	const get_key = ctx => /*todo*/ ctx[1].id;
-    	validate_each_keys(ctx, each_value, get_each_context, get_key);
+    	let each_blocks = [];
 
     	for (let i = 0; i < each_value.length; i += 1) {
-    		let child_ctx = get_each_context(ctx, each_value, i);
-    		let key = get_key(child_ctx);
-    		each_1_lookup.set(key, each_blocks[i] = create_each_block(key, child_ctx));
+    		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
     	}
+
+    	const out = i => transition_out(each_blocks[i], 1, 1, () => {
+    		each_blocks[i] = null;
+    	});
 
     	const block = {
     		c: function create() {
@@ -826,9 +797,28 @@ var app = (function () {
     			if (dirty & /*todoList*/ 1) {
     				each_value = /*todoList*/ ctx[0];
     				validate_each_argument(each_value);
+    				let i;
+
+    				for (i = 0; i < each_value.length; i += 1) {
+    					const child_ctx = get_each_context(ctx, each_value, i);
+
+    					if (each_blocks[i]) {
+    						each_blocks[i].p(child_ctx, dirty);
+    						transition_in(each_blocks[i], 1);
+    					} else {
+    						each_blocks[i] = create_each_block(child_ctx);
+    						each_blocks[i].c();
+    						transition_in(each_blocks[i], 1);
+    						each_blocks[i].m(div, null);
+    					}
+    				}
+
     				group_outros();
-    				validate_each_keys(ctx, each_value, get_each_context, get_key);
-    				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, div, outro_and_destroy_block, create_each_block, null, get_each_context);
+
+    				for (i = each_value.length; i < each_blocks.length; i += 1) {
+    					out(i);
+    				}
+
     				check_outros();
     			}
     		},
@@ -842,6 +832,8 @@ var app = (function () {
     			current = true;
     		},
     		o: function outro(local) {
+    			each_blocks = each_blocks.filter(Boolean);
+
     			for (let i = 0; i < each_blocks.length; i += 1) {
     				transition_out(each_blocks[i]);
     			}
@@ -850,10 +842,7 @@ var app = (function () {
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(div);
-
-    			for (let i = 0; i < each_blocks.length; i += 1) {
-    				each_blocks[i].d();
-    			}
+    			destroy_each(each_blocks, detaching);
     		}
     	};
 
@@ -925,6 +914,8 @@ var app = (function () {
     }
 
     /* src/App.svelte generated by Svelte v3.32.1 */
+
+    const { console: console_1 } = globals;
     const file$3 = "src/App.svelte";
 
     function create_fragment$3(ctx) {
@@ -940,10 +931,18 @@ var app = (function () {
     	let t4;
     	let link1;
     	let current;
-    	input = new Input({ $$inline: true });
+
+    	input = new Input({
+    			props: {
+    				todo: /*todo*/ ctx[0],
+    				addTodo: /*addTodo*/ ctx[2],
+    				handleKeyUp: /*handleKeyUp*/ ctx[3]
+    			},
+    			$$inline: true
+    		});
 
     	todos = new Todos({
-    			props: { todoList: /*todoList*/ ctx[0] },
+    			props: { todoList: /*todoList*/ ctx[1] },
     			$$inline: true
     		});
 
@@ -962,17 +961,17 @@ var app = (function () {
     			t4 = space();
     			link1 = element("link");
     			attr_dev(p, "class", "svelte-1fkidfo");
-    			add_location(p, file$3, 25, 2, 400);
+    			add_location(p, file$3, 48, 2, 742);
     			attr_dev(div, "class", "svelte-1fkidfo");
-    			add_location(div, file$3, 24, 1, 392);
+    			add_location(div, file$3, 47, 1, 734);
     			attr_dev(main, "class", "svelte-1fkidfo");
-    			add_location(main, file$3, 23, 0, 384);
+    			add_location(main, file$3, 46, 0, 726);
     			attr_dev(link0, "rel", "preconnect");
     			attr_dev(link0, "href", "https://fonts.gstatic.com");
-    			add_location(link0, file$3, 32, 0, 470);
+    			add_location(link0, file$3, 54, 0, 842);
     			attr_dev(link1, "href", "https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap");
     			attr_dev(link1, "rel", "stylesheet");
-    			add_location(link1, file$3, 33, 0, 527);
+    			add_location(link1, file$3, 55, 0, 899);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -991,7 +990,14 @@ var app = (function () {
     			insert_dev(target, link1, anchor);
     			current = true;
     		},
-    		p: noop,
+    		p: function update(ctx, [dirty]) {
+    			const input_changes = {};
+    			if (dirty & /*todo*/ 1) input_changes.todo = /*todo*/ ctx[0];
+    			input.$set(input_changes);
+    			const todos_changes = {};
+    			if (dirty & /*todoList*/ 2) todos_changes.todoList = /*todoList*/ ctx[1];
+    			todos.$set(todos_changes);
+    		},
     		i: function intro(local) {
     			if (current) return;
     			transition_in(input.$$.fragment, local);
@@ -1028,42 +1034,74 @@ var app = (function () {
     function instance$3($$self, $$props, $$invalidate) {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("App", slots, []);
+    	let todo = "";
 
     	let todoList = [
     		{
-    			id: new Date(),
+    			id: 1,
     			text: "할일이 산더미다",
     			completed: false
     		},
+    		{ id: 2, text: "할일이 없나?", completed: false },
     		{
-    			id: new Date(),
-    			text: "할일이 없나?",
-    			completed: false
-    		},
-    		{
-    			id: new Date(),
+    			id: 3,
     			text: "할일을 미루고싶다",
     			completed: true
     		}
     	];
 
+    	let lastId = todoList[todoList.length - 1]["id"];
+
+    	let addTodo = () => {
+    		console.log("addTodo 실행");
+
+    		let newTodo = {
+    			id: ++lastId,
+    			text: todo,
+    			completed: false
+    		};
+
+    		$$invalidate(1, todoList[todoList.length] = newTodo, todoList);
+    		$$invalidate(0, todo = "");
+    	};
+
+    	let handleKeyUp = e => {
+    		$$invalidate(0, todo = e.target.value);
+
+    		if (e.keyCode === 13) {
+    			addTodo();
+    		}
+    	};
+
     	const writable_props = [];
 
     	Object.keys($$props).forEach(key => {
-    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<App> was created with unknown prop '${key}'`);
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1.warn(`<App> was created with unknown prop '${key}'`);
     	});
 
-    	$$self.$capture_state = () => ({ Input, Todos, todoList });
+    	$$self.$capture_state = () => ({
+    		Input,
+    		Todos,
+    		todo,
+    		todoList,
+    		lastId,
+    		addTodo,
+    		handleKeyUp
+    	});
 
     	$$self.$inject_state = $$props => {
-    		if ("todoList" in $$props) $$invalidate(0, todoList = $$props.todoList);
+    		if ("todo" in $$props) $$invalidate(0, todo = $$props.todo);
+    		if ("todoList" in $$props) $$invalidate(1, todoList = $$props.todoList);
+    		if ("lastId" in $$props) lastId = $$props.lastId;
+    		if ("addTodo" in $$props) $$invalidate(2, addTodo = $$props.addTodo);
+    		if ("handleKeyUp" in $$props) $$invalidate(3, handleKeyUp = $$props.handleKeyUp);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [todoList];
+    	return [todo, todoList, addTodo, handleKeyUp];
     }
 
     class App extends SvelteComponentDev {

@@ -4,7 +4,7 @@
 </script>
 
 <div>
-  {#each todoList as todo (todo.id)}
+  {#each todoList as todo }
     <TodoItem {todo}/>
   {/each}
 </div>

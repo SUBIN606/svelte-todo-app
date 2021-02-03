@@ -4,7 +4,7 @@
 
 <div>
   <input type="checkbox" checked={todo.completed}/>
-  <p>{todo.text}</p>
+  <p>{todo.id}{todo.text}</p>
   <button>x</button>
 </div>
 
