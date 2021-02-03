@@ -1,11 +1,31 @@
 <script>
 	import Input from "./components/Input.svelte";
+	import Todos from "./components/Todos.svelte";
+
+	let todoList = [
+    {
+      id: new Date(),
+      text: "할일이 산더미다",
+      completed: false
+    },
+    {
+      id: new Date(),
+      text: "할일이 없나?",
+      completed: false
+    },
+    {
+      id: new Date(),
+      text: "할일을 미루고싶다",
+      completed: true
+    }
+  ];
 </script>
 
 <main>
 	<div>
 		<p>To Do List</p>
 		<Input/>
+		<Todos {todoList} />
 	</div>
 
 </main>
