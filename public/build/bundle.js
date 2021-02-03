@@ -179,12 +179,6 @@ var app = (function () {
             block.o(local);
         }
     }
-
-    const globals = (typeof window !== 'undefined'
-        ? window
-        : typeof globalThis !== 'undefined'
-            ? globalThis
-            : global);
     function create_component(block) {
         block && block.c();
     }
@@ -584,6 +578,8 @@ var app = (function () {
     	let t2;
     	let t3;
     	let button;
+    	let mounted;
+    	let dispose;
 
     	const block = {
     		c: function create() {
@@ -598,11 +594,11 @@ var app = (function () {
     			button.textContent = "x";
     			attr_dev(input, "type", "checkbox");
     			input.checked = input_checked_value = /*todo*/ ctx[0].completed;
-    			add_location(input, file$1, 5, 2, 47);
-    			add_location(p, file$1, 6, 2, 99);
-    			add_location(button, file$1, 7, 2, 129);
+    			add_location(input, file$1, 7, 2, 101);
+    			add_location(p, file$1, 8, 2, 193);
+    			add_location(button, file$1, 9, 2, 223);
     			attr_dev(div, "class", "svelte-1vzwf70");
-    			add_location(div, file$1, 4, 0, 39);
+    			add_location(div, file$1, 6, 0, 93);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -616,6 +612,15 @@ var app = (function () {
     			append_dev(p, t2);
     			append_dev(div, t3);
     			append_dev(div, button);
+
+    			if (!mounted) {
+    				dispose = [
+    					listen_dev(input, "change", /*change_handler*/ ctx[3], false, false, false),
+    					listen_dev(button, "click", /*click_handler*/ ctx[4], false, false, false)
+    				];
+
+    				mounted = true;
+    			}
     		},
     		p: function update(ctx, [dirty]) {
     			if (dirty & /*todo*/ 1 && input_checked_value !== (input_checked_value = /*todo*/ ctx[0].completed)) {
@@ -629,6 +634,8 @@ var app = (function () {
     		o: noop,
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(div);
+    			mounted = false;
+    			run_all(dispose);
     		}
     	};
 
@@ -647,33 +654,47 @@ var app = (function () {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("TodoItem", slots, []);
     	let { todo } = $$props;
-    	const writable_props = ["todo"];
+    	let { deleteTodo } = $$props;
+    	let { handleComplete } = $$props;
+    	const writable_props = ["todo", "deleteTodo", "handleComplete"];
 
     	Object.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<TodoItem> was created with unknown prop '${key}'`);
     	});
 
+    	const change_handler = () => handleComplete(todo.id);
+    	const click_handler = () => deleteTodo(todo.id);
+
     	$$self.$$set = $$props => {
     		if ("todo" in $$props) $$invalidate(0, todo = $$props.todo);
+    		if ("deleteTodo" in $$props) $$invalidate(1, deleteTodo = $$props.deleteTodo);
+    		if ("handleComplete" in $$props) $$invalidate(2, handleComplete = $$props.handleComplete);
     	};
 
-    	$$self.$capture_state = () => ({ todo });
+    	$$self.$capture_state = () => ({ todo, deleteTodo, handleComplete });
 
     	$$self.$inject_state = $$props => {
     		if ("todo" in $$props) $$invalidate(0, todo = $$props.todo);
+    		if ("deleteTodo" in $$props) $$invalidate(1, deleteTodo = $$props.deleteTodo);
+    		if ("handleComplete" in $$props) $$invalidate(2, handleComplete = $$props.handleComplete);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [todo];
+    	return [todo, deleteTodo, handleComplete, change_handler, click_handler];
     }
 
     class TodoItem extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$1, create_fragment$1, safe_not_equal, { todo: 0 });
+
+    		init(this, options, instance$1, create_fragment$1, safe_not_equal, {
+    			todo: 0,
+    			deleteTodo: 1,
+    			handleComplete: 2
+    		});
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
@@ -688,6 +709,14 @@ var app = (function () {
     		if (/*todo*/ ctx[0] === undefined && !("todo" in props)) {
     			console.warn("<TodoItem> was created without expected prop 'todo'");
     		}
+
+    		if (/*deleteTodo*/ ctx[1] === undefined && !("deleteTodo" in props)) {
+    			console.warn("<TodoItem> was created without expected prop 'deleteTodo'");
+    		}
+
+    		if (/*handleComplete*/ ctx[2] === undefined && !("handleComplete" in props)) {
+    			console.warn("<TodoItem> was created without expected prop 'handleComplete'");
+    		}
     	}
 
     	get todo() {
@@ -697,6 +726,22 @@ var app = (function () {
     	set todo(value) {
     		throw new Error("<TodoItem>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
+
+    	get deleteTodo() {
+    		throw new Error("<TodoItem>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set deleteTodo(value) {
+    		throw new Error("<TodoItem>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get handleComplete() {
+    		throw new Error("<TodoItem>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set handleComplete(value) {
+    		throw new Error("<TodoItem>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
     }
 
     /* src/components/Todos.svelte generated by Svelte v3.32.1 */
@@ -704,17 +749,21 @@ var app = (function () {
 
     function get_each_context(ctx, list, i) {
     	const child_ctx = ctx.slice();
-    	child_ctx[1] = list[i];
+    	child_ctx[3] = list[i];
     	return child_ctx;
     }
 
-    // (7:2) {#each todoList as todo }
+    // (9:2) {#each todoList as todo }
     function create_each_block(ctx) {
     	let todoitem;
     	let current;
 
     	todoitem = new TodoItem({
-    			props: { todo: /*todo*/ ctx[1] },
+    			props: {
+    				todo: /*todo*/ ctx[3],
+    				deleteTodo: /*deleteTodo*/ ctx[1],
+    				handleComplete: /*handleComplete*/ ctx[2]
+    			},
     			$$inline: true
     		});
 
@@ -728,7 +777,9 @@ var app = (function () {
     		},
     		p: function update(ctx, dirty) {
     			const todoitem_changes = {};
-    			if (dirty & /*todoList*/ 1) todoitem_changes.todo = /*todo*/ ctx[1];
+    			if (dirty & /*todoList*/ 1) todoitem_changes.todo = /*todo*/ ctx[3];
+    			if (dirty & /*deleteTodo*/ 2) todoitem_changes.deleteTodo = /*deleteTodo*/ ctx[1];
+    			if (dirty & /*handleComplete*/ 4) todoitem_changes.handleComplete = /*handleComplete*/ ctx[2];
     			todoitem.$set(todoitem_changes);
     		},
     		i: function intro(local) {
@@ -749,7 +800,7 @@ var app = (function () {
     		block,
     		id: create_each_block.name,
     		type: "each",
-    		source: "(7:2) {#each todoList as todo }",
+    		source: "(9:2) {#each todoList as todo }",
     		ctx
     	});
 
@@ -779,7 +830,7 @@ var app = (function () {
     				each_blocks[i].c();
     			}
 
-    			add_location(div, file$2, 5, 0, 87);
+    			add_location(div, file$2, 7, 0, 141);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -794,7 +845,7 @@ var app = (function () {
     			current = true;
     		},
     		p: function update(ctx, [dirty]) {
-    			if (dirty & /*todoList*/ 1) {
+    			if (dirty & /*todoList, deleteTodo, handleComplete*/ 7) {
     				each_value = /*todoList*/ ctx[0];
     				validate_each_argument(each_value);
     				let i;
@@ -861,7 +912,9 @@ var app = (function () {
     	let { $$slots: slots = {}, $$scope } = $$props;
     	validate_slots("Todos", slots, []);
     	let { todoList } = $$props;
-    	const writable_props = ["todoList"];
+    	let { deleteTodo } = $$props;
+    	let { handleComplete } = $$props;
+    	const writable_props = ["todoList", "deleteTodo", "handleComplete"];
 
     	Object.keys($$props).forEach(key => {
     		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Todos> was created with unknown prop '${key}'`);
@@ -869,25 +922,39 @@ var app = (function () {
 
     	$$self.$$set = $$props => {
     		if ("todoList" in $$props) $$invalidate(0, todoList = $$props.todoList);
+    		if ("deleteTodo" in $$props) $$invalidate(1, deleteTodo = $$props.deleteTodo);
+    		if ("handleComplete" in $$props) $$invalidate(2, handleComplete = $$props.handleComplete);
     	};
 
-    	$$self.$capture_state = () => ({ TodoItem, todoList });
+    	$$self.$capture_state = () => ({
+    		TodoItem,
+    		todoList,
+    		deleteTodo,
+    		handleComplete
+    	});
 
     	$$self.$inject_state = $$props => {
     		if ("todoList" in $$props) $$invalidate(0, todoList = $$props.todoList);
+    		if ("deleteTodo" in $$props) $$invalidate(1, deleteTodo = $$props.deleteTodo);
+    		if ("handleComplete" in $$props) $$invalidate(2, handleComplete = $$props.handleComplete);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [todoList];
+    	return [todoList, deleteTodo, handleComplete];
     }
 
     class Todos extends SvelteComponentDev {
     	constructor(options) {
     		super(options);
-    		init(this, options, instance$2, create_fragment$2, safe_not_equal, { todoList: 0 });
+
+    		init(this, options, instance$2, create_fragment$2, safe_not_equal, {
+    			todoList: 0,
+    			deleteTodo: 1,
+    			handleComplete: 2
+    		});
 
     		dispatch_dev("SvelteRegisterComponent", {
     			component: this,
@@ -902,6 +969,14 @@ var app = (function () {
     		if (/*todoList*/ ctx[0] === undefined && !("todoList" in props)) {
     			console.warn("<Todos> was created without expected prop 'todoList'");
     		}
+
+    		if (/*deleteTodo*/ ctx[1] === undefined && !("deleteTodo" in props)) {
+    			console.warn("<Todos> was created without expected prop 'deleteTodo'");
+    		}
+
+    		if (/*handleComplete*/ ctx[2] === undefined && !("handleComplete" in props)) {
+    			console.warn("<Todos> was created without expected prop 'handleComplete'");
+    		}
     	}
 
     	get todoList() {
@@ -911,11 +986,25 @@ var app = (function () {
     	set todoList(value) {
     		throw new Error("<Todos>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
     	}
+
+    	get deleteTodo() {
+    		throw new Error("<Todos>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set deleteTodo(value) {
+    		throw new Error("<Todos>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	get handleComplete() {
+    		throw new Error("<Todos>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
+
+    	set handleComplete(value) {
+    		throw new Error("<Todos>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+    	}
     }
 
     /* src/App.svelte generated by Svelte v3.32.1 */
-
-    const { console: console_1 } = globals;
     const file$3 = "src/App.svelte";
 
     function create_fragment$3(ctx) {
@@ -942,7 +1031,11 @@ var app = (function () {
     		});
 
     	todos = new Todos({
-    			props: { todoList: /*todoList*/ ctx[1] },
+    			props: {
+    				todoList: /*todoList*/ ctx[1],
+    				deleteTodo: /*deleteTodo*/ ctx[4],
+    				handleComplete: /*handleComplete*/ ctx[5]
+    			},
     			$$inline: true
     		});
 
@@ -961,17 +1054,17 @@ var app = (function () {
     			t4 = space();
     			link1 = element("link");
     			attr_dev(p, "class", "svelte-1fkidfo");
-    			add_location(p, file$3, 48, 2, 742);
+    			add_location(p, file$3, 57, 2, 975);
     			attr_dev(div, "class", "svelte-1fkidfo");
-    			add_location(div, file$3, 47, 1, 734);
+    			add_location(div, file$3, 56, 1, 967);
     			attr_dev(main, "class", "svelte-1fkidfo");
-    			add_location(main, file$3, 46, 0, 726);
+    			add_location(main, file$3, 55, 0, 959);
     			attr_dev(link0, "rel", "preconnect");
     			attr_dev(link0, "href", "https://fonts.gstatic.com");
-    			add_location(link0, file$3, 54, 0, 842);
+    			add_location(link0, file$3, 63, 0, 1104);
     			attr_dev(link1, "href", "https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap");
     			attr_dev(link1, "rel", "stylesheet");
-    			add_location(link1, file$3, 55, 0, 899);
+    			add_location(link1, file$3, 64, 0, 1161);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -1053,16 +1146,16 @@ var app = (function () {
     	let lastId = todoList[todoList.length - 1]["id"];
 
     	let addTodo = () => {
-    		console.log("addTodo 실행");
+    		if (todo) {
+    			let newTodo = {
+    				id: ++lastId,
+    				text: todo,
+    				completed: false
+    			};
 
-    		let newTodo = {
-    			id: ++lastId,
-    			text: todo,
-    			completed: false
-    		};
-
-    		$$invalidate(1, todoList[todoList.length] = newTodo, todoList);
-    		$$invalidate(0, todo = "");
+    			$$invalidate(1, todoList[todoList.length] = newTodo, todoList);
+    			$$invalidate(0, todo = "");
+    		}
     	};
 
     	let handleKeyUp = e => {
@@ -1073,10 +1166,19 @@ var app = (function () {
     		}
     	};
 
+    	let deleteTodo = id => {
+    		$$invalidate(1, todoList = todoList.filter(todo => todo.id !== id));
+    	};
+
+    	let handleComplete = id => {
+    		const index = todoList.findIndex(todo => todo.id === id);
+    		$$invalidate(1, todoList[index]["completed"] = !todoList[index]["completed"], todoList);
+    	};
+
     	const writable_props = [];
 
     	Object.keys($$props).forEach(key => {
-    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1.warn(`<App> was created with unknown prop '${key}'`);
+    		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<App> was created with unknown prop '${key}'`);
     	});
 
     	$$self.$capture_state = () => ({
@@ -1086,7 +1188,9 @@ var app = (function () {
     		todoList,
     		lastId,
     		addTodo,
-    		handleKeyUp
+    		handleKeyUp,
+    		deleteTodo,
+    		handleComplete
     	});
 
     	$$self.$inject_state = $$props => {
@@ -1095,13 +1199,15 @@ var app = (function () {
     		if ("lastId" in $$props) lastId = $$props.lastId;
     		if ("addTodo" in $$props) $$invalidate(2, addTodo = $$props.addTodo);
     		if ("handleKeyUp" in $$props) $$invalidate(3, handleKeyUp = $$props.handleKeyUp);
+    		if ("deleteTodo" in $$props) $$invalidate(4, deleteTodo = $$props.deleteTodo);
+    		if ("handleComplete" in $$props) $$invalidate(5, handleComplete = $$props.handleComplete);
     	};
 
     	if ($$props && "$$inject" in $$props) {
     		$$self.$inject_state($$props.$$inject);
     	}
 
-    	return [todo, todoList, addTodo, handleKeyUp];
+    	return [todo, todoList, addTodo, handleKeyUp, deleteTodo, handleComplete];
     }
 
     class App extends SvelteComponentDev {

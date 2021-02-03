@@ -24,9 +24,8 @@
 	let lastId = todoList[todoList.length-1]['id'];
 
 	let addTodo = () => {
-    console.log("addTodo 실행");
-	
-    let newTodo = {
+		if(todo) {
+			let newTodo = {
       id: ++lastId,
       text: todo,
       completed: false
@@ -34,6 +33,7 @@
 		
     todoList[todoList.length] = newTodo;
     todo = "";
+		}
 	}
 	
 	let handleKeyUp = e => {
@@ -42,13 +42,22 @@
 			addTodo();
 		}
 	}
+
+	let deleteTodo = (id) => {
+		todoList = todoList.filter((todo) => todo.id !== id);
+	}
+
+	let handleComplete = (id) => {
+		const index = todoList.findIndex((todo) => todo.id === id);
+		todoList[index]["completed"] = !todoList[index]["completed"];
+	}
 </script>
 
 <main>
 	<div>
 		<p>To Do List</p>
 		<Input {todo} {addTodo} {handleKeyUp}/>
-		<Todos {todoList} />
+		<Todos {todoList} {deleteTodo} {handleComplete}/>
 	</div>
 </main>
 
